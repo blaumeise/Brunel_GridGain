@@ -28,7 +28,7 @@ public class DictionaryChecker {
 		String rightStatement = "Everything is Ok";
 		String wrongStatement = "Wrong Password";
 		boolean success = false;
-		String command = "call C:\\7-Zip\\7z.exe x C:\\Temp\\" + fileName
+		String command = "call 7z x C:\\Temp\\" + fileName
 				+ " -oC:\\Temp\\output" + id + " -p" + password + " -y";
 		try {
 			Runtime.getRuntime().exec("cmd");
