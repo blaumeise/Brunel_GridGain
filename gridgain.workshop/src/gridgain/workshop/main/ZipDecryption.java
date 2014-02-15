@@ -76,7 +76,12 @@ public final class ZipDecryption {
 		final File file = new File("C:\\Temp\\tools.jar");
 //		final File file = new File("C:\\Temp\\installlog.txt");
 		
-		readPWFile(g.size());
+		try {
+			readPWFile(g.size());
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		try {
 			System.out.println("Pi estimate: "
 					+ g.reduce(SPREAD, F.yield(F.range(0, g.size()),
