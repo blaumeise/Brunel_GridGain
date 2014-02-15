@@ -39,7 +39,7 @@ public class DictionaryChecker {
 			Reader r = new InputStreamReader(process.getInputStream());
 			BufferedReader in = new BufferedReader(r);
 			while ((line = in.readLine()) != null) {
-				if (line.contains(wrongStatement)) {
+				if (line.contains(wrongStatement) || line.contains("null")) {
 
 					success = false;
 					return null;
