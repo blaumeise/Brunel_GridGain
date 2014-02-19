@@ -73,8 +73,8 @@ public final class ZipDecryption {
 		G.start();
 		Grid g = G.grid();
 //		g.configuration().getSecureSessionSpi().
-		final File file = new File("C:\\Temp\\tools.jar");
-//		final File file = new File("C:\\Temp\\installlog.txt");
+//		final File file = new File("C:\\Temp\\tools.jar");
+		final File file = new File("C:\\Temp\\installlog.txt");
 		
 		try {
 			readPWFile(g.size());

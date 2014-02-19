@@ -1,6 +1,7 @@
 package gridgain.workshop.main;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -19,93 +20,93 @@ public class DictionaryChecker {
 	 *            Upper boundary of divisors range.
 	 * @return First divisor found or {@code null} if no divisor was found.
 	 */
-	@Nullable
-	public static String checkPrime(String password, String fileName, int id) {
-		// Loop through all divisors in the range and check if the value passed
-		// in is divisible by any of these divisors.
-		// Note that we also check for thread interruption which may happen
-		// if the job was cancelled from the grid task.
-		String rightStatement = "Everything is Ok";
-		String wrongStatement = "Wrong Password";
-		boolean success = false;
-		String command = "call 7z x C:\\Temp\\" + fileName
-				+ " -oC:\\Temp\\output" + id + " -p" + password + " -y";
-		try {
-			Runtime.getRuntime().exec("cmd");
 
-			System.out.println("Windows command: " + command);
-			String line;
-			Process process = Runtime.getRuntime().exec("cmd /c " + command);
-			Reader r = new InputStreamReader(process.getInputStream());
-			BufferedReader in = new BufferedReader(r);
-			while ((line = in.readLine()) != null) {
-				if (line.contains(wrongStatement) || line.contains("null")) {
-
-					success = false;
-					return null;
-					// break;
-				} else if (line.contains(rightStatement)) {
-					return password;
-					// success = true;
-					// result[0] = ""+success;
-					// result[2] = ""+i;
-					// break;
-				}
-				// System.out.println(line);
-			}
-			in.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return null;
-	}
+	private static final String rightStatement = "Everything is Ok";
+	private static final String wrongStatement = "Wrong Password";
 
 	@Nullable
 	public static String checkPrime(String[] password, String fileName,
-			int min, int max) {
-		// Loop through all divisors in the range and check if the value passed
-		// in is divisible by any of these divisors.
-		// Note that we also check for thread interruption which may happen
-		// if the job was cancelled from the grid task.
-		String rightStatement = "Everything is Ok";
-		String wrongStatement = "Wrong Password";
-		boolean success = false;
-		for (int i = min; i <= max && !Thread.currentThread().isInterrupted(); i++) {
-			String command = "call C:\\7-Zip\\7z.exe x C:\\Temp\\" + fileName
-					+ " -oC:\\Temp\\output" + min + " -p" + password[i] + " -y";
-			try {
-				Runtime.getRuntime().exec("cmd");
+			int min, int max, boolean deleteInputFile) {
 
+		if (System.getProperty("os.name").startsWith("Windows")) {
+			// includes: Windows 2000, Windows 95, Windows 98, Windows NT,
+			// Windows Vista, Windows XP, Windows 7, Windows 8...
+			return checkPasswordWindows(password, fileName, min, max,
+					deleteInputFile);
+		} else { // UNIX and Mac
+			// everything else
+		}
+		System.out.println("Operation not yet supported");
+		return null;
+	}
+
+	private static String checkPasswordWindows(String[] password,
+			String fileName, int min, int max, boolean deleteInputFile) {
+		File fileCheck = new File(fileName);
+
+		if (!fileCheck.exists()) {
+			System.out
+					.println("The 7zip file: "
+							+ fileName
+							+ " is not availible on this node, passwords in the range: "
+							+ min + "-" + max + " are not tested");
+			return null;
+		}
+
+		String outputFoldername = new File("").getAbsolutePath() + "\\output"
+				+ min;
+
+		for (int i = min; i < max && !Thread.currentThread().isInterrupted(); i++) {
+			// String command = "call C:\\7-Zip\\7z.exe x C:\\Temp\\" + fileName
+			// + " -oC:\\Temp\\output" + min + " -p" + password[i] + " -y";
+			String command = "call 7z x " + fileName + " -o" + outputFoldername
+					+ " -p" + password[i] + " -y";
+			try {
 				System.out.println("Windows command: " + command);
 				String line;
 				Process process = Runtime.getRuntime()
 						.exec("cmd /c " + command);
+				// bash -c
 				Reader r = new InputStreamReader(process.getInputStream());
 				BufferedReader in = new BufferedReader(r);
 				while ((line = in.readLine()) != null) {
-					if (line.contains(wrongStatement)) {
-
-						success = false;
-//						return null;
-						// break;
+					if (line.contains(wrongStatement) || line.contains("null")) {
 					} else if (line.contains(rightStatement)) {
+						in.close();
+						deleteFile(fileName, min, outputFoldername,
+								deleteInputFile);
 						return password[i];
-						// success = true;
-						// result[0] = ""+success;
-						// result[2] = ""+i;
-						// break;
 					}
-					// System.out.println(line);
 				}
 				in.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				System.out.println("Exception: Execute 7zip command Statement failed");
 			}
 		}
+		deleteFile(fileName, min, outputFoldername, deleteInputFile);
 		return null;
 	}
-}
 
+	private static void deleteFile(String fileName, int min, String foldername,
+			boolean deleteInputFile) {
+
+		if (deleteInputFile) {
+			deleteElement(fileName);
+			System.out.println("Delete file: " + fileName);
+		}
+
+		File folder = new File(foldername);
+
+		String[] children = folder.list();
+		for (int i = 0; children != null && i < children.length; i++) {
+			deleteElement(folder.getAbsoluteFile() + "\\" + children[i]);
+		}
+		folder.delete();
+		System.out.println("Deleted folder with its elements: " + foldername);
+	}
+
+	private static void deleteElement(String name) {
+		File file = new File(name);
+		file.delete();
+	}
+}
