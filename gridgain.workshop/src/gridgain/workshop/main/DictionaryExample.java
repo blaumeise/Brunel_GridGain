@@ -102,7 +102,7 @@ public final class DictionaryExample {
 		ArrayList<String> array = new ArrayList<String>();
 
 		while ((inputLine = in.readLine()) != null) {
-			array.add(inputLine);
+			array.add(ecsapePassword(inputLine));
 		}
 		String[] pwArray = new String[array.size()];
 
@@ -110,6 +110,17 @@ public final class DictionaryExample {
 			pwArray[i] = array.get(i);
 		}
 		return pwArray;
+	}
+	
+	public static String ecsapePassword(String input) {
+		input = input.replace("\"", "");
+		return input;
+	}
+	
+	public static void printIPAdress(Collection<String> collection){
+		for(String string : collection){
+			System.out.println(string);
+		}
 	}
 	
 	public static void executeDictionary(String filename, String dictionaryname, String args[],
@@ -123,12 +134,20 @@ public final class DictionaryExample {
 		X.println(">>> Starting to check with the following dictionary: "
 				+ Arrays.toString(posPW));
 
-		try (Grid g = args.length == 0 ? G.start("myGrid/default-config.xml")
+		try (Grid g = args.length == 0 ? G.start("config/default-config.xml")
 				: G.start(args[0])) {
 			long start = System.currentTimeMillis();
 
 			final File file = new File(filename);
 
+			Collection<String> a = g.localNode().addresses();
+			printIPAdress(a);
+			for(GridNode sg : G.grid().nodes()){
+				Collection<String> i = sg.externalAddresses();
+				printIPAdress(i);
+				
+			}
+			
 			String divisor = g.reduce(GridClosureCallMode.SPREAD,
 					closures(g.size(), file, deleteInput, remoteUse, dictionaryname), new R1<String, String>() {
 

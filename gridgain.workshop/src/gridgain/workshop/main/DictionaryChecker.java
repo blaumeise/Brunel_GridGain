@@ -60,7 +60,7 @@ public class DictionaryChecker {
 			// String command = "call C:\\7-Zip\\7z.exe x C:\\Temp\\" + fileName
 			// + " -oC:\\Temp\\output" + min + " -p" + password[i] + " -y";
 			String command = "call 7z x " + fileName + " -o" + outputFoldername
-					+ " -p" + password[i] + " -y";
+					+ " -p\"" + password[i] + "\" -y";
 			try {
 				System.out.println("Windows command: " + command);
 				String line;
