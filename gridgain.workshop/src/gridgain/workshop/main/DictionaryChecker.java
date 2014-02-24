@@ -8,40 +8,57 @@ import java.io.Reader;
 
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author Matthias Riedel and Philipp Trumpp
+ * 
+ * This class isolates methods implementing the password cracking logic.
+ * Methods will be executed on every node of the grid.
+ * Implements more utility methods for cleaning up the temporary files on each node.
+ *
+ */
 public class DictionaryChecker {
+	
+	private static final String successfulExtract = "Everything is Ok";
+	private static final String failedExtract = "Wrong Password";
+	private static boolean execute7zipCommand = true;
+	
 	/**
-	 * Checks if given value is a prime number.
-	 * 
-	 * @param val
-	 *            Value to check for prime.
-	 * @param minRage
-	 *            Lower boundary of divisors range.
+	 * Method crackArchive
+	 * Method checks the nodes operating system and uses the compatible method
+	 * @param passwords
+	 * @param fileName
+	 * @param minRange
 	 * @param maxRange
-	 *            Upper boundary of divisors range.
-	 * @return First divisor found or {@code null} if no divisor was found.
+	 * @param deleteInputFile
+	 * @return resulting password
 	 */
-
-	private static final String rightStatement = "Everything is Ok";
-	private static final String wrongStatement = "Wrong Password";
-
 	@Nullable
-	public static String checkPrime(String[] password, String fileName,
-			int min, int max, boolean deleteInputFile) {
+	public static String crackArchive(String[] passwords, String fileName,
+			int minRange, int maxRange, boolean deleteInputFile) {
 
 		if (System.getProperty("os.name").startsWith("Windows")) {
 			// includes: Windows 2000, Windows 95, Windows 98, Windows NT,
 			// Windows Vista, Windows XP, Windows 7, Windows 8...
-			return checkPasswordWindows(password, fileName, min, max,
+			return checkPasswordWindows(passwords, fileName, minRange, maxRange,
 					deleteInputFile);
 		} else { // UNIX and Mac
-			// everything else
+			System.out.println("Your Operating System is not yet supported. Please remove this Node!\n Passwords in range " + minRange + " - " + maxRange + "will not be tested!");
 		}
-		System.out.println("Operation not yet supported");
 		return null;
 	}
 
-	private static String checkPasswordWindows(String[] password,
-			String fileName, int min, int max, boolean deleteInputFile) {
+	/**
+	 * Method checkPasswordWindows
+	 * Method executes the 7-Zip "command line"-call for each specific password in list passwords
+	 * @param passwords
+	 * @param fileName
+	 * @param minRange
+	 * @param maxRange
+	 * @param deleteInputFile
+	 * @return resulting password
+	 */
+	private static String checkPasswordWindows(String[] passwords,
+			String fileName, int minRange, int maxRange, boolean deleteInputFile) {
 		File fileCheck = new File(fileName);
 
 		if (!fileCheck.exists()) {
@@ -49,45 +66,52 @@ public class DictionaryChecker {
 					.println("The 7zip file: "
 							+ fileName
 							+ " is not availible on this node, passwords in the range: "
-							+ min + "-" + max + " are not tested");
+							+ minRange + "-" + maxRange + " are not tested");
 			return null;
 		}
 
 		String outputFoldername = new File("").getAbsolutePath() + "\\output"
-				+ min;
+				+ minRange;
 
-		for (int i = min; i < max && !Thread.currentThread().isInterrupted(); i++) {
-			// String command = "call C:\\7-Zip\\7z.exe x C:\\Temp\\" + fileName
-			// + " -oC:\\Temp\\output" + min + " -p" + password[i] + " -y";
+		for (int i = minRange; i < maxRange && !Thread.currentThread().isInterrupted(); i++) {
 			String command = "call 7z x " + fileName + " -o" + outputFoldername
-					+ " -p\"" + password[i] + "\" -y";
+					+ " -p\"" + passwords[i] + "\" -y";
+			if(execute7zipCommand) {
 			try {
 				System.out.println("Windows command: " + command);
 				String line;
 				Process process = Runtime.getRuntime()
-						.exec("cmd /c " + command);
-				// bash -c
+						.exec("cmd /c " + command);	// Execution of command line call
+				// bash -c //for future unix functionality in seperated method
 				Reader r = new InputStreamReader(process.getInputStream());
 				BufferedReader in = new BufferedReader(r);
-				while ((line = in.readLine()) != null) {
-					if (line.contains(wrongStatement) || line.contains("null")) {
-					} else if (line.contains(rightStatement)) {
+				while ((line = in.readLine()) != null) {	//examination of command line output
+					if (line.contains(failedExtract) || line.contains("null")) {
+					} else if (line.contains(successfulExtract)) {
 						in.close();
-						deleteFile(fileName, min, outputFoldername,
+						deleteFile(fileName, minRange, outputFoldername,
 								deleteInputFile);
-						return password[i];
+						return passwords[i];
 					}
 				}
 				in.close();
 			} catch (IOException e) {
 				System.out.println("Exception: Execute 7zip command Statement failed");
 			}
-		}
-		deleteFile(fileName, min, outputFoldername, deleteInputFile);
+		}}
+		deleteFile(fileName, minRange, outputFoldername, deleteInputFile);
 		return null;
 	}
 
-	private static void deleteFile(String fileName, int min, String foldername,
+	/**
+	 * Method deleteFile
+	 * Method deletes temporary extracted files on every node
+	 * @param fileName
+	 * @param folderIndex
+	 * @param foldername
+	 * @param deleteInputFile
+	 */
+	private static void deleteFile(String fileName, int folderIndex, String foldername,
 			boolean deleteInputFile) {
 
 		if (deleteInputFile) {
@@ -96,7 +120,6 @@ public class DictionaryChecker {
 		}
 
 		File folder = new File(foldername);
-
 		String[] children = folder.list();
 		for (int i = 0; children != null && i < children.length; i++) {
 			deleteElement(folder.getAbsoluteFile() + "\\" + children[i]);
@@ -105,6 +128,11 @@ public class DictionaryChecker {
 		System.out.println("Deleted folder with its elements: " + foldername);
 	}
 
+	/**
+	 * Method deleteElement
+	 * Method deletes the specific file object
+	 * @param name
+	 */
 	private static void deleteElement(String name) {
 		File file = new File(name);
 		file.delete();

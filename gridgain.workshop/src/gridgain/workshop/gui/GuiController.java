@@ -10,6 +10,12 @@ import javax.swing.JTextPane;
 
 import org.gridgain.grid.GridException;
 
+/**
+ * 
+ * @author Ana Fernandez +??
+ * @modified Matthias Riedel and Philipp Trumpp
+ *
+ */
 public class GuiController {
 	private JTextPane output;
 	private File selectedFile;
@@ -27,11 +33,25 @@ public class GuiController {
 		this.output = output;
 	}
 
+	/**
+	 * Method setSelectedFile
+	 * Method transfers path to zip-archive to logic
+	 * @param selectedFile
+	 * @throws IOException
+	 * @throws GridException
+	 */
 	public void setSelectedFile(File selectedFile) throws IOException, GridException {
 		this.selectedFile = selectedFile;
 		System.out.println("Selected 7zip-File: "+ selectedFile.getAbsolutePath());
 	}
 	
+	/**
+	 * Method setSelectedDict
+	 * Method transfers path to password-dictionary to logic
+	 * @param selectedDict
+	 * @throws IOException
+	 * @throws GridException
+	 */
 	public void setSelectedDict(File selectedDict) throws IOException, GridException {
 		this.selectedDict = selectedDict;
 		System.out.println("Selected Dictionary: "+ selectedDict.getAbsolutePath());
@@ -42,6 +62,14 @@ public class GuiController {
 		this.args = args;
 	}
 
+	/**
+	 * Method findPassword
+	 * Method collects gui information and invokes dictionary attack
+	 * @param deleteInputFile
+	 * @param remoteUsed
+	 * @throws IOException
+	 * @throws GridException
+	 */
 	public void findPassword(boolean deleteInputFile, boolean remoteUsed) throws IOException, GridException {
 		if (selectedFile != null && selectedDict != null) {
 			
@@ -60,6 +88,11 @@ public class GuiController {
 		}
 	}
 
+	/**
+	 * Method showPassword
+	 * Method updates gui to result of logic
+	 * @param pw
+	 */
 	public void showPassword(String pw) {
 		if(pw.isEmpty()){
 			output.setBackground(Color.RED);

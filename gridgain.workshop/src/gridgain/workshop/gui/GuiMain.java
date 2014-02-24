@@ -16,6 +16,12 @@ import javax.swing.SwingUtilities;
 
 import org.gridgain.grid.GridException;
 
+/**
+ * 
+ * @author Ana Fernandez +??
+ * @modified Matthias Riedel and Philipp Trumpp
+ *
+ */
 public class GuiMain extends JFrame {
 	private JTextField txt_input;
 	private JTextField txt_dict;
@@ -33,8 +39,12 @@ public class GuiMain extends JFrame {
 		initUI();
 	}
 
-	private void initUI() {
 
+	/**
+	 * Method initUI
+	 * Method create the User Interface 
+	 */
+	private void initUI() {
 		JPanel panel = new JPanel();
 
 		getContentPane().add(panel);
@@ -96,6 +106,11 @@ public class GuiMain extends JFrame {
 		controller.setOutput(txt_output);
 	}
 
+	/**
+	 * @author Ana Fernandez
+	 * Class OpenFileChooser
+	 * is called when the button for choosing the 7-zip File is executed
+	 */
 	class OpenFileChooser implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			JFileChooser c = new JFileChooser();
@@ -119,6 +134,12 @@ public class GuiMain extends JFrame {
 		}
 	}
 	
+	
+	/**
+	 * @author Matthias Riedel and Philipp Trumpp
+	 * Class DictionaryChooser
+	 * is called when the button for choosing the dictionary is executed
+	 */
 	class DictionaryChooser implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			JFileChooser c = new JFileChooser();
@@ -141,6 +162,12 @@ public class GuiMain extends JFrame {
 		}
 	}
 	
+	/**
+	 * @author Ana Fernandez
+	 * @modifie Matthias Riedel and Philipp Trumpp
+	 * Class FindPassword
+	 * is called when the button to start the dictionary attack is executed
+	 */
 	class FindPassword implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			txt_output.setText("-- Searching password --");
@@ -155,7 +182,6 @@ public class GuiMain extends JFrame {
 	}
 
 	public static void main(final String[] args) {
-
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
@@ -164,5 +190,4 @@ public class GuiMain extends JFrame {
 			}
 		});
 	}
-
 }

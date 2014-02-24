@@ -15,6 +15,7 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.UUID;
 
 import org.gridgain.grid.Grid;
 import org.gridgain.grid.GridClosureCallMode;
@@ -28,34 +29,40 @@ import org.gridgain.grid.typedef.X;
 import org.jetbrains.annotations.*;
 
 /**
- * Simple prime checkers. The implementation of this class iterates through the
- * passed in list of divisors and checks if the value is divisible by any of
- * these divisors.
  * 
- * @author 2013 Copyright (C) GridGain Systems
- * @version In-Memory HPC 5.3.1
+ * @author Matthias Riedel and Philipp Trumpp
+ * 
+ * This class is called by the GuiController to get access on the dictionary-attack logic.
+ * It prepares and distributes the tasks on the available nodes and starts the procedure.
+ * The deprecated methods were used for debugging purpose when we tried to disable selected nodes.
+ *
  */
 public final class DictionaryExample {
 
 	static private GuiController guiController = null;
 
+	/**
+	 * Method copyFile
+	 * Method distributes zip-archive on nodes.
+	 * Works only on local nodes because of what seems like missing permissions.
+	 * @param source
+	 * @param i
+	 * @return absolute path of file
+	 * @throws IOException
+	 */
 	private static String copyFile(File source, int i) throws IOException {
 		InputStream is = null;
 		OutputStream os = null;
 		File file = new File("");
-		System.out.println("Current dir : " + file.getCanonicalPath());
 		String destlink = file.getAbsolutePath();
 		destlink = destlink.replace("\\", "/");
 		String FileName = source.getName();
 		if (FileName.lastIndexOf(".") != -1) {
 			String type = FileName.substring(FileName.lastIndexOf("."));
-			System.out.println("Type: " + type);
 			FileName = FileName.substring(0, FileName.lastIndexOf("."));
-			System.out.println("SubFileName: " + FileName);
 			FileName = FileName + i + type;
 		}
 		File dest = new File(destlink + "/" + FileName);
-		System.out.println("Panik: " + new File(destlink).getAbsolutePath());
 		if (dest != null)
 			dest.delete();
 		dest.createNewFile();
@@ -72,12 +79,16 @@ public final class DictionaryExample {
 			is.close();
 			os.close();
 		}
-		System.out.println("Destpath: " + dest.getAbsolutePath());
-		System.out.println("Filename: " + FileName);
 		return dest.getAbsolutePath();
 	}
 
-	private static String[] readPWFile() throws IOException {
+	/**
+	 * Method readPasswordFile
+	 * Method reads file of passwords at static path
+	 * @return array of passwords
+	 * @throws IOException
+	 */
+	private static String[] readPasswordFile() throws IOException {
 		File file = new File(new File("").getAbsolutePath() + "\\PW.txt");
 		BufferedReader in = new BufferedReader(new FileReader(file));
 		String inputLine = null;
@@ -94,7 +105,14 @@ public final class DictionaryExample {
 		return pwArray;
 	}
 
-	private static String[] readPWFile(String filename) throws IOException {
+	/**
+	 * Method readPasswordFile
+	 * Method reads file of passwords at specific path from parameter filename
+	 * @param filename
+	 * @return array of passwords
+	 * @throws IOException
+	 */
+	private static String[] readPasswordFile(String filename) throws IOException {
 		
 		File file = new File(filename);
 		BufferedReader in = new BufferedReader(new FileReader(file));
@@ -102,7 +120,7 @@ public final class DictionaryExample {
 		ArrayList<String> array = new ArrayList<String>();
 
 		while ((inputLine = in.readLine()) != null) {
-			array.add(ecsapePassword(inputLine));
+			array.add(escapePassword(inputLine));
 		}
 		String[] pwArray = new String[array.size()];
 
@@ -112,27 +130,69 @@ public final class DictionaryExample {
 		return pwArray;
 	}
 	
-	public static String ecsapePassword(String input) {
+	/**
+	 * Method escapePassword
+	 * @param input
+	 * @return escaped password
+	 */
+	public static String escapePassword(String input) {
 		input = input.replace("\"", "");
 		return input;
 	}
 	
+	@Deprecated
 	public static void printIPAdress(Collection<String> collection){
 		for(String string : collection){
 			System.out.println(string);
 		}
 	}
 	
+	@Deprecated
+	public static String detectMasterIP(Collection<String>collection){
+		int counter = 0;
+		for(String value : collection){
+			if(counter ==3 ){ //TODO Muss 2 sein, fuer test die drei
+				return value;
+			}
+			counter++;
+		}
+		return "";
+	}
+
+	@Deprecated
+	public static boolean compareIPs(Collection<String>collection, String masterIP){
+		for (String value : collection){
+			if(value.equals(masterIP)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Method executeDictionary
+	 * Method routes gui information to dictionary logic.
+	 * Implementation of time measurement.
+	 * Disabled code within method tried to remove specific nodes from grid.
+	 * @param filename
+	 * @param dictionaryname
+	 * @param args
+	 * @param guiController
+	 * @param deleteInput
+	 * @param remoteUse
+	 * @throws IOException
+	 * @throws GridException
+	 */
 	public static void executeDictionary(String filename, String dictionaryname, String args[],
 			GuiController guiController, boolean deleteInput, boolean remoteUse) throws IOException, GridException {
 		if (DictionaryExample.guiController == null) {
 			DictionaryExample.guiController = guiController;
 		}
-		String[] posPW = readPWFile(dictionaryname);
+		String[] posPW = readPasswordFile(dictionaryname);
 
 		X.println(">>>");
-		X.println(">>> Starting to check with the following dictionary: "
-				+ Arrays.toString(posPW));
+//		X.println(">>> Starting to check with the following dictionary: "
+//				+ Arrays.toString(posPW));
 
 		try (Grid g = args.length == 0 ? G.start("config/default-config.xml")
 				: G.start(args[0])) {
@@ -140,14 +200,47 @@ public final class DictionaryExample {
 
 			final File file = new File(filename);
 
-			Collection<String> a = g.localNode().addresses();
-			printIPAdress(a);
-			for(GridNode sg : G.grid().nodes()){
-				Collection<String> i = sg.externalAddresses();
-				printIPAdress(i);
-				
-			}
-			
+//			Collection<String> a = g.localNode().addresses();
+//			System.out.println("Master");
+//			printIPAdress(a);
+//			String masterIP = detectMasterIP(a);
+//			Collection<UUID> nodesToDisable = null;
+//			
+//			for(GridNode sg : G.grid().nodes()){
+//				Collection<String> i = sg.externalAddresses();
+//				Collection<String> j = sg.internalAddresses();
+//				Collection<String> k = sg.addresses();
+//				System.out.println("Schleifendurchlauf");
+//				printIPAdress(i);
+//				printIPAdress(j);
+//				printIPAdress(k);
+//				System.out.println("Nodeid: "+ sg.id());
+//				
+//				if(
+//						//compareIPs(i, masterIP) || 
+////						compareIPs(j, masterIP) || 
+//						compareIPs(k, masterIP)){
+//					System.out.println("compare IPs");
+//					UUID nodeID = sg.id();
+////					nodesToDisable.add(nodeID);
+//					System.out.println("groesse before stop: " + g.size());
+//					int se = g.size();
+////					g.stopNodes(nodeID);
+//					
+//					
+//					System.out.println("groesse after stop: " + g.size());
+//				}
+//			}
+//			System.out.println("-----Node Disable Start-----");
+//			g.stopNodes(nodesToDisable);
+//			System.out.println("Grid Size: " + g.size());
+//			System.out.println("-----Node Disable End-----");
+//			
+//			System.out.println("-----Node Enable Start-----");
+//			g.restartNodes(nodesToDisable);
+//			System.out.println("Grid Size: " + g.size());
+//			System.out.println("-----Node Enable End-----");
+//			
 			String divisor = g.reduce(GridClosureCallMode.SPREAD,
 					closures(g.size(), file, deleteInput, remoteUse, dictionaryname), new R1<String, String>() {
 
@@ -183,10 +276,20 @@ public final class DictionaryExample {
 		}
 	}
 
-
+/**
+ * Method closures
+ * Method distributes specific range of passwords on nodes
+ * @param gridSize
+ * @param file
+ * @param deleteInput
+ * @param remoteUsed
+ * @param dictionaryname
+ * @return job results as collection
+ * @throws IOException
+ */
 	private static Collection<GridOutClosure<String>> closures(int gridSize,
 			final File file, final boolean deleteInput, final boolean remoteUsed, String dictionaryname) throws IOException {
-		final String[] posPW = readPWFile(dictionaryname);
+		final String[] posPW = readPasswordFile(dictionaryname);
 		Collection<GridOutClosure<String>> cls = new ArrayList<>(gridSize);
 		long val = posPW.length;
 
@@ -222,18 +325,12 @@ public final class DictionaryExample {
 				@Nullable
 				@Override
 				public String apply() {
-					// Return first divisor found or null if no
-					// divisor was found.
-					// return GridPrimeChecker.checkPrime(val, min, max);
-
-				
+					
 					boolean distributedNodes = remoteUsed;
 
 					String filename = new File("").getAbsolutePath() + "\\"
 							+ file.getName();
-					System.out.println("Relativer Filepfad: " + filename);
 					try {
-//						distributedNodes = true;
 						if (!distributedNodes) {
 							filename = copyFile(file,
 									Integer.parseInt(String.valueOf(min)));
@@ -242,9 +339,9 @@ public final class DictionaryExample {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					System.out.println("Closures: " + filename);
+					System.out.println("Relativer Filepfad: " + filename);
 					boolean deleteCopyInputFile = deleteInput;
-					return DictionaryChecker.checkPrime(posPW, filename,
+					return DictionaryChecker.crackArchive(posPW, filename,
 							Integer.parseInt(String.valueOf(min)),
 							Integer.parseInt(String.valueOf(max)),
 							deleteCopyInputFile);
